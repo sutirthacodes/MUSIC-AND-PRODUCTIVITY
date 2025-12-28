@@ -1,4 +1,4 @@
-# Panelled Stacked Bar Plot:  Music Genre vs Productivity vs Task Type
+ # Panelled Stacked Bar Plot:  Music Genre vs Productivity vs Task Type
 
 library(dplyr)
 library(ggplot2)
