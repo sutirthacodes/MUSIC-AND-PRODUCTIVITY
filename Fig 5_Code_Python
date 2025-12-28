@@ -1,0 +1,65 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+file_path = "/mnt/data/Music Genres & Productivity (Responses).xlsx"
+df = pd.read_excel(file_path)
+
+df = df.rename(columns={
+    "How Often Do You Listen During Work/Study?": "Frequency",
+    "Productivity Rating (1-5)": "Productivity"
+})
+
+frequency_order = ["Often", "Sometimes", "Rarely", "Never"]
+productivity_order = [1, 2, 3, 4, 5]
+
+proportion_df = (
+    df.groupby(["Frequency", "Productivity"])
+      .size()
+      .groupby(level=0)
+      .apply(lambda x: x / x.sum())
+      .unstack(fill_value=0)
+      .reindex(index=frequency_order, columns=productivity_order)
+)
+
+colors = ["#001f3f", "#3b4a6b", "#7f7f7f", "#c2b280", "#ffee33"]
+x = np.arange(len(frequency_order))
+bottom = np.zeros(len(frequency_order))
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+for i, rating in enumerate(productivity_order):
+    values = proportion_df[rating].values
+    bars = ax.bar(
+        x, values, bottom=bottom,
+        color=colors[i], edgecolor="white",
+        label=str(rating)
+    )
+    
+    for j, v in enumerate(values):
+        if v > 0:
+            ax.text(
+                j, bottom[j] + v / 2,
+                f"{int(round(v * 100))}%",
+                ha="center", va="center",
+                fontsize=9, color="white"
+            )
+    
+    bottom += values
+
+ax.set_xticks(x)
+ax.set_xticklabels(frequency_order)
+ax.set_ylim(0, 1)
+
+ax.set_xlabel("How Often Do You Listen During Work/Study?")
+ax.set_ylabel("Proportion of Responses")
+ax.set_title("Listening Frequency vs. Self-Rated Productivity")
+
+ax.legend(
+    title="Productivity Rating (1-5)",
+    bbox_to_anchor=(1.02, 1),
+    loc="upper left"
+)
+
+plt.tight_layout()
+plt.show()
