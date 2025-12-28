@@ -1,0 +1,62 @@
+# Panelled Stacked Bar Plot:  Music Genre vs Productivity vs Task Type
+
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(tidyr)
+
+# Read dataset
+music <- read.csv("Music.csv")
+
+music <- music %>%
+  rename(
+    Genre = Genre.s..of.Music.you.like.listening.to..multiple.options.allowed..,
+    Productivity = Rate.your.productivity.when.listening.to.music.on.a.scale.of.1.5...PLEASE.be.honest.,
+    TaskType = What.type.of.tasks.do.you.do.while.listening.to.music...Multiple.options.are.allowed.
+  )
+
+
+music_long <- music %>%
+  separate_rows(Genre, sep = ",") %>%
+  separate_rows(TaskType, sep = ",")
+
+# Clean text
+music_long <- music_long %>%
+  mutate(
+    Genre = str_trim(Genre),
+    TaskType = str_trim(TaskType),
+    Productivity = as.factor(Productivity)
+  )
+
+music_long <- music_long %>%
+  mutate(
+    TaskTypeClean = case_when(
+      str_detect(TaskType, regex("study|academic|reading", ignore_case = TRUE)) ~ "Studying",
+      str_detect(TaskType, regex("coding|assign|project|work", ignore_case = TRUE)) ~ "Academic Work",
+      str_detect(TaskType, regex("exercise|gym|walk", ignore_case = TRUE)) ~ "Physical Activity",
+      str_detect(TaskType, regex("chores|clean|house", ignore_case = TRUE)) ~ "Household Tasks",
+      TRUE ~ "Casual / Leisure"
+    )
+  )
+
+music_long <- music_long %>%
+  filter(!Genre %in% c("Bollywood music", "Indian pop"))
+
+ggplot(music_long, aes(x = Productivity, fill = TaskTypeClean)) +
+  geom_bar() +
+  facet_wrap(~ Genre, scales = "free_y") +
+  labs(
+    title = "Productivity Levels Across Music Genres and Task Types",
+    x = "Self-Rated Productivity (1 = Low, 5 = High)",
+    y = "Count of Responses",
+    fill = "Type of Activity"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.text.x = element_text(size = 10),
+    strip.text = element_text(face = "bold")
+  )
+
+
+ggsave("Panel_Stacked_Productivity_by_Genre.pdf", width = 12, height = 8)
