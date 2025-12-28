@@ -1,0 +1,55 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+file_path = "/mnt/data/Music Genres & Productivity (Responses).xlsx"
+df = pd.read_excel(file_path)
+
+freq_col = "How Often Do You Listen During Work/Study?"
+conc_col = "Does music help concentrate?"
+
+freq_order = ["Often", "Sometimes", "Rarely", "Never"]
+conc_order = [
+    "Yes, significantly",
+    "Helps a bit",
+    "Neutral",
+    "No, it distracts me"
+]
+
+ct = pd.crosstab(df[freq_col], df[conc_col], normalize="index")
+ct = ct.reindex(freq_order)[conc_order]
+
+colors = ["#440154", "#31688e", "#35b779", "#fde725"]
+
+x = np.arange(len(ct.index))
+bottom = np.zeros(len(ct.index))
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+for i, col in enumerate(ct.columns):
+    values = ct[col].values
+    bars = ax.bar(x, values, bottom=bottom,
+                  label=col, color=colors[i], edgecolor="white")
+
+    for j, v in enumerate(values):
+        if v > 0:
+            ax.text(j, bottom[j] + v / 2,
+                    f"{int(round(v*100))}%",
+                    ha="center", va="center",
+                    fontsize=9, color="white")
+
+    bottom += values
+
+ax.set_xticks(x)
+ax.set_xticklabels(ct.index)
+ax.set_ylim(0, 1)
+
+ax.set_xlabel("How Often Do You Listen During Work/Study?")
+ax.set_ylabel("Proportion of Responses")
+ax.set_title("Relationship Between Listening Frequency and Concentration")
+
+ax.legend(title="Does music help concentrate?",
+          bbox_to_anchor=(1.02, 1), loc="upper left")
+
+plt.tight_layout()
+plt.show()
