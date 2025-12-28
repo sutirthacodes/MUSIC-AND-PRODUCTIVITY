@@ -1,0 +1,53 @@
+# Correlation Analysis: Music Listening Habits and Productivity
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+
+music <- read.csv("Music.csv")
+
+music_clean <- music %>%
+  mutate(
+    Music_Hours = case_when(
+      How.many.hours.of.music.do.you.listen.per.day.on.an.averag == "<1"  ~ 1,
+      How.many.hours.of.music.do.you.listen.per.day.on.an.averag == "1-3" ~ 2,
+      How.many.hours.of.music.do.you.listen.per.day.on.an.averag == "4-6" ~ 3,
+      How.many.hours.of.music.do.you.listen.per.day.on.an.averag == ">6"  ~ 4,
+      TRUE ~ NA_real_
+    ),
+    Frequency = as.numeric(
+      How.often.do.you.listen.to.music.during.work.study.
+    ),
+    Productivity = as.numeric(
+      Rate.your.productivity.when.listening.to.music.on.a.scale.of.1.5...PLEASE.be.honest.
+    )
+  ) %>%
+  select(Music_Hours, Frequency, Productivity) %>%
+  na.omit()
+
+# Compute Pearson correlation matrix
+cor_matrix <- cor(music_clean, method = "pearson")
+print(cor_matrix)
+
+cor_melted <- melt(cor_matrix)
+
+# Plot correlation heatmap
+ggplot(cor_melted, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = round(value, 2)), size = 5) +
+  scale_fill_gradient2(
+    low = "blue", mid = "white", high = "red",
+    midpoint = 0, limits = c(-1, 1),
+    name = "Correlation"
+  ) +
+  labs(
+    title = "Correlation Between Music Listening Habits and Productivity",
+    x = "",
+    y = ""
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+ggsave("Correlation_Heatmap.pdf", width = 8, height = 6)
